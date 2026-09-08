@@ -20,6 +20,7 @@ import csv
 import io
 import logging
 import re
+import os
 
 import pandas as pd
 from flask import (
@@ -1107,9 +1108,7 @@ def server_error(error):
 # =========================================================
 
 if __name__ == "__main__":
-
     app.run(
         host="0.0.0.0",
-        port=5000,
-        debug=False
+        port=int(os.environ.get("PORT", 5000))
     )
