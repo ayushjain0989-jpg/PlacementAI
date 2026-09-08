@@ -3,21 +3,23 @@ All SQLite access for the app.
 
 Two things worth knowing:
 
-  * `assessment_date` stores a *display* string ("05 Sep 2026, 03:14 PM"). You cannot
-    sort or group by that in SQL -- "05 Sep" and "05 Oct" compare as text. A
-    `created_at` column holding ISO-8601 was added alongside it, backfilled by parsing
-    the old strings. History sorting and the over-time chart both need it.
+  * `assessment_date` stores a display string ("05 Sep 2026, 03:14 PM").
+    `created_at` stores an ISO-8601 timestamp for sorting and analytics.
+
+  * All assessment times are stored using India Standard Time (IST),
+    Asia/Kolkata timezone.
 
   * Every query is parameterized. The one place a value reaches SQL by string
-    substitution is the ORDER BY column, which cannot be a bound parameter, so it is
-    resolved through a whitelist and never taken from the request directly.
+    substitution is the ORDER BY column, which cannot be a bound parameter,
+    so it is resolved through a whitelist and never taken from the request directly.
 """
 
 import json
 import logging
 import sqlite3
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 from config import (
     DATABASE_PATH,
@@ -29,7 +31,18 @@ from config import (
 logger = logging.getLogger(__name__)
 
 
-# Columns holding JSON documents; parsed on the way out, dumped on the way in.
+# =========================================================
+# TIMEZONE
+# =========================================================
+
+# India Standard Time
+INDIA_TIMEZONE = ZoneInfo("Asia/Kolkata")
+
+
+# =========================================================
+# JSON COLUMNS
+# =========================================================
+
 JSON_COLUMNS = [
 
     "student_data",
@@ -43,7 +56,10 @@ JSON_COLUMNS = [
 ]
 
 
-# ORDER BY targets. Request values are keys of this map, never SQL fragments.
+# =========================================================
+# SORTING
+# =========================================================
+
 SORT_COLUMNS = {
 
     "date":
@@ -137,8 +153,7 @@ def init_database():
             for row in cursor.fetchall()
         ]
 
-        # Same additive-migration pattern the table already used, extended to
-        # created_at. SQLite has no ADD COLUMN IF NOT EXISTS.
+        # Add missing JSON columns and created_at.
         for column in (
             JSON_COLUMNS
             + ["created_at"]
@@ -156,16 +171,25 @@ def init_database():
                     column
                 )
 
+    # First make sure old rows have a created_at value.
     _backfill_created_at()
 
+    # Convert old UTC timestamps to IST.
+    _migrate_old_utc_times_to_ist()
+
+
+# =========================================================
+# OLD DATA MIGRATION
+# =========================================================
 
 def _backfill_created_at():
     """
     Give pre-existing rows a sortable timestamp.
 
-    Rows whose display string cannot be parsed keep a NULL created_at; queries fall
-    back to id ordering, which is the same chronological order for an
-    autoincrementing key.
+    Older versions of the application may have stored only assessment_date.
+    Those values were generated using the server's UTC time on Render.
+
+    We treat those old display values as UTC and convert them to IST.
     """
 
     with connect() as connection:
@@ -189,9 +213,18 @@ def _backfill_created_at():
 
             try:
 
+                # Old Render timestamps were UTC.
                 parsed = datetime.strptime(
                     row["assessment_date"],
                     DATE_DISPLAY_FORMAT
+                )
+
+                parsed = parsed.replace(
+                    tzinfo=timezone.utc
+                )
+
+                india_time = parsed.astimezone(
+                    INDIA_TIMEZONE
                 )
 
             except (ValueError, TypeError):
@@ -201,13 +234,20 @@ def _backfill_created_at():
             cursor.execute(
                 """
                 UPDATE predictions
-                SET created_at = ?
+                SET
+                    assessment_date = ?,
+                    created_at = ?
                 WHERE id = ?
                 """,
                 (
-                    parsed.isoformat(
+                    india_time.strftime(
+                        DATE_DISPLAY_FORMAT
+                    ),
+
+                    india_time.isoformat(
                         timespec="seconds"
                     ),
+
                     row["id"]
                 )
             )
@@ -215,10 +255,115 @@ def _backfill_created_at():
             repaired += 1
 
         logger.info(
-            "Backfilled created_at for %d of %d row(s)",
+            "Backfilled created_at and converted %d of %d old row(s) to IST",
             repaired,
             len(pending)
         )
+
+
+def _migrate_old_utc_times_to_ist():
+    """
+    Convert rows created by the previous version of the application.
+
+    The old version used:
+
+        datetime.now()
+
+    On Render this returned UTC.
+
+    New rows contain a timezone offset such as:
+
+        2026-09-08T12:09:00+05:30
+
+    Old rows contain a timezone-naive value such as:
+
+        2026-09-08T06:39:00
+
+    Therefore only timezone-naive created_at values are converted.
+    This prevents the migration from running twice on new records.
+    """
+
+    with connect() as connection:
+
+        cursor = connection.cursor()
+
+        cursor.execute("""
+            SELECT id, assessment_date, created_at
+            FROM predictions
+            WHERE created_at IS NOT NULL
+        """)
+
+        rows = cursor.fetchall()
+
+        converted = 0
+
+        for row in rows:
+
+            created_at = row["created_at"]
+
+            if not created_at:
+                continue
+
+            try:
+
+                parsed = datetime.fromisoformat(
+                    created_at
+                )
+
+            except (ValueError, TypeError):
+
+                continue
+
+            # Already timezone-aware.
+            # This means it has already been migrated or was created
+            # using the new code.
+            if parsed.tzinfo is not None:
+                continue
+
+            try:
+
+                # Old timestamps came from Render's UTC clock.
+                parsed = parsed.replace(
+                    tzinfo=timezone.utc
+                )
+
+                india_time = parsed.astimezone(
+                    INDIA_TIMEZONE
+                )
+
+            except (ValueError, TypeError):
+
+                continue
+
+            cursor.execute(
+                """
+                UPDATE predictions
+                SET
+                    assessment_date = ?,
+                    created_at = ?
+                WHERE id = ?
+                """,
+                (
+                    india_time.strftime(
+                        DATE_DISPLAY_FORMAT
+                    ),
+
+                    india_time.isoformat(
+                        timespec="seconds"
+                    ),
+
+                    row["id"]
+                )
+            )
+
+            converted += 1
+
+        if converted:
+
+            logger.info(
+                "Converted %d existing UTC assessment time(s) to IST",
+                converted
+            )
 
 
 # =========================================================
@@ -285,7 +430,25 @@ def insert_prediction(
 ):
     """Store one assessment and return its new id."""
 
-    now = now or datetime.now()
+    # IMPORTANT:
+    # Always use India Standard Time instead of Render's UTC server time.
+    now = now or datetime.now(
+        INDIA_TIMEZONE
+    )
+
+    # If a caller passes a naive datetime, assume it is IST.
+    if now.tzinfo is None:
+
+        now = now.replace(
+            tzinfo=INDIA_TIMEZONE
+        )
+
+    # Convert any timezone-aware value to IST.
+    else:
+
+        now = now.astimezone(
+            INDIA_TIMEZONE
+        )
 
     with connect() as connection:
 
@@ -309,15 +472,38 @@ def insert_prediction(
             """,
             (
                 name,
+
                 probability,
+
                 status,
+
                 str(prediction),
-                now.strftime(DATE_DISPLAY_FORMAT),
-                now.isoformat(timespec="seconds"),
-                json.dumps(student_data),
-                json.dumps(skills),
-                json.dumps(recommendations),
-                json.dumps(shap_data)
+
+                # Human-readable IST date.
+                now.strftime(
+                    DATE_DISPLAY_FORMAT
+                ),
+
+                # Timezone-aware ISO timestamp.
+                now.isoformat(
+                    timespec="seconds"
+                ),
+
+                json.dumps(
+                    student_data
+                ),
+
+                json.dumps(
+                    skills
+                ),
+
+                json.dumps(
+                    recommendations
+                ),
+
+                json.dumps(
+                    shap_data
+                )
             )
         )
 
@@ -474,10 +660,13 @@ def list_predictions(
         status
     )
 
-    page = max(1, int(page))
+    page = max(
+        1,
+        int(page)
+    )
 
-    # id is the tiebreaker so that equal keys (two assessments in the same minute,
-    # or two students with the same name) still come back in a stable order.
+    # id is the tiebreaker so that equal keys still come back
+    # in a stable order.
     sql = (
         "SELECT * FROM predictions "
         + where
@@ -555,8 +744,8 @@ def summary():
             for row in cursor.fetchall()
         }
 
-        # prediction is a TEXT column and older rows may hold "Placed" rather than
-        # "1", so both spellings are counted.
+        # prediction is a TEXT column and older rows may hold "Placed"
+        # rather than "1", so both spellings are counted.
         cursor.execute("""
             SELECT COUNT(*) AS count
             FROM predictions
@@ -597,8 +786,8 @@ def probability_histogram(bucket_size=10):
     """
     Counts per probability band.
 
-    The top band is inclusive of 100, so a perfect score lands in 90-100 rather than
-    opening a 100-109 bucket of its own.
+    The top band is inclusive of 100, so a perfect score lands in
+    90-100 rather than opening a 100-109 bucket.
     """
 
     bucket_count = 100 // bucket_size
@@ -633,7 +822,11 @@ def probability_histogram(bucket_size=10):
                 f"{index * bucket_size}-"
                 + str(
                     (index + 1) * bucket_size
-                    - (0 if index == bucket_count - 1 else 1)
+                    - (
+                        0
+                        if index == bucket_count - 1
+                        else 1
+                    )
                 ),
 
             "count":
