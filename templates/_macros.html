@@ -1,0 +1,75 @@
+{#
+    Small pieces of markup that three or more templates need.
+
+    Kept as macros with explicit arguments rather than context-dependent includes so a
+    caller can see exactly what each one reads.
+#}
+
+
+{#
+    Readiness status is a string from config.STATUS_* -- the templates no longer
+    re-derive it from the probability. result.html used to carry
+    `{% if probability >= 75 %}` twice, which meant the 75/50 thresholds lived in
+    config.py, in app.py and in the template, and only two of the three would get
+    updated.
+#}
+{% macro status_class(status) -%}
+    {%- if status == "High Readiness" -%}
+        high
+    {%- elif status == "Moderate Readiness" -%}
+        moderate
+    {%- else -%}
+        low
+    {%- endif -%}
+{%- endmacro %}
+
+
+{#
+    Icon *and* text, never colour alone -- the previous badges distinguished the three
+    readiness levels only by a coloured circle, which a red/green colour-blind reader
+    cannot separate.
+#}
+{% macro status_badge(status, extra_class="") %}
+
+    <span class="history-status {{ status_class(status) }} {{ extra_class }}">
+
+        <span class="status-glyph" aria-hidden="true">
+            {%- if status == "High Readiness" -%}
+                &#9650;
+            {%- elif status == "Moderate Readiness" -%}
+                &#9679;
+            {%- else -%}
+                &#9660;
+            {%- endif -%}
+        </span>
+
+        {{ status }}
+
+    </span>
+
+{% endmacro %}
+
+
+{#
+    `prediction` is stored as TEXT, and rows written before the column was normalised
+    hold "Placed" rather than "1", so both spellings count as placed.
+#}
+{% macro prediction_badge(prediction) %}
+
+    {% if prediction is not none
+          and (prediction|string|lower == "1"
+               or prediction|string|lower == "placed") %}
+
+        <span class="prediction-placed">
+            <span aria-hidden="true">&#10003;</span> Placed
+        </span>
+
+    {% else %}
+
+        <span class="prediction-not-placed">
+            <span aria-hidden="true">&#10007;</span> Not Placed
+        </span>
+
+    {% endif %}
+
+{% endmacro %}

@@ -1,0 +1,244 @@
+{% import "_macros.html" as ui %}
+
+{#
+    Print / PDF version of one assessment.
+
+    Deliberately does NOT extend base.html: the navbar, footer, skip link and flash
+    banners have no business on a printed page, and a print stylesheet that has to hide
+    all of them is more fragile than simply not emitting them.
+
+    There is no PDF library here. The browser's own "Save as PDF" does the job, which is
+    why the only script is a window.print() call -- and why it is guarded so the page is
+    still readable if it never runs.
+
+    Reads: record, student_data, skills, recommendations, shap_data,
+           status_description, communication_max.
+#}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>
+        PlacementAI Report &mdash; {{ record.student_name or "Assessment" }}
+    </title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+
+
+<body class="print-body">
+
+
+<!-- =====================================================
+     SCREEN-ONLY TOOLBAR
+===================================================== -->
+{#
+    .print-hide is display:none inside @media print, so this bar guides the user on
+    screen and leaves no trace in the PDF.
+#}
+
+<div class="print-toolbar print-hide">
+
+    <a href="{{ url_for('prediction_details', prediction_id=record.id) }}"
+       class="secondary-btn small">
+        &larr; Back to the report
+    </a>
+
+    <button type="button"
+            class="btn small"
+            id="print-now">
+        Print this page
+    </button>
+
+    <a href="{{ url_for('export_prediction', prediction_id=record.id) }}"
+       class="secondary-btn small">
+        Download CSV
+    </a>
+
+</div>
+
+
+<main class="print-sheet">
+
+
+    <!-- =================================================
+         LETTERHEAD
+    ================================================= -->
+
+    <header class="print-header">
+
+        <div>
+
+            <p class="print-brand">
+                Placement<span>AI</span>
+            </p>
+
+            <p class="print-subtitle">
+                Placement Readiness Report
+            </p>
+
+        </div>
+
+        <div class="print-meta">
+
+            <p>
+                Assessment #{{ record.id }}
+            </p>
+
+            <p>
+                {{ record.assessment_date }}
+            </p>
+
+        </div>
+
+    </header>
+
+
+    <!-- =================================================
+         HEADLINE RESULT
+    ================================================= -->
+
+    <section class="print-summary">
+
+        <div>
+
+            <p class="print-label">
+                STUDENT
+            </p>
+
+            <h1>
+                {{ record.student_name or "Unnamed student" }}
+            </h1>
+
+            <p class="print-status-line">
+                {{ ui.status_badge(record.status) }}
+                {{ ui.prediction_badge(record.prediction) }}
+            </p>
+
+        </div>
+
+
+        <div class="print-score">
+
+            <strong>
+                {{ record.probability }}%
+            </strong>
+
+            <span>
+                Placement probability
+            </span>
+
+        </div>
+
+    </section>
+
+
+    {% if status_description %}
+
+    <p class="print-note">
+        {{ status_description }}
+    </p>
+
+    {% endif %}
+
+
+    <!-- =================================================
+         PROFILE
+    ================================================= -->
+
+    <section class="print-section">
+
+        <h2>
+            Assessment Profile
+        </h2>
+
+        {% include "_profile_summary.html" %}
+
+    </section>
+
+
+    <!-- =================================================
+         EXPLANATION
+    ================================================= -->
+
+    <section class="print-section print-break">
+
+        <h2>
+            Why the Model Predicted This
+        </h2>
+
+        {% include "_shap_chart.html" %}
+
+    </section>
+
+
+    <!-- =================================================
+         SKILL GAPS
+    ================================================= -->
+
+    <section class="print-section">
+
+        <h2>
+            Skills to Improve
+        </h2>
+
+        {% include "_skill_gaps.html" %}
+
+    </section>
+
+
+    <!-- =================================================
+         RECOMMENDATIONS
+    ================================================= -->
+
+    <section class="print-section">
+
+        <h2>
+            Recommendations
+        </h2>
+
+        {% include "_recommendations.html" %}
+
+    </section>
+
+
+    <!-- =================================================
+         FOOTER
+    ================================================= -->
+
+    <footer class="print-footer">
+
+        <p>
+            Generated by PlacementAI. The probability is a
+            model estimate from the submitted profile, not a
+            guarantee of a placement outcome.
+        </p>
+
+    </footer>
+
+
+</main>
+
+
+{#
+    Not `onload="window.print()"`: an unconditional print dialog on page load is hostile
+    if the user only wanted to read the report. The button asks for it explicitly.
+#}
+<script>
+    document.getElementById("print-now")
+        .addEventListener("click", function () {
+            window.print();
+        });
+</script>
+
+
+</body>
+</html>

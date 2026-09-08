@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %} | Model Performance{% endblock %}
+
+{% block main_class %}model-page{% endblock %}
+
+{% block content %}
+
+
+<!-- HEADER -->
+
+<section class="model-header">
+
+    <p class="section-tag">
+        MACHINE LEARNING ANALYSIS
+    </p>
+
+    <h1>
+        Model Performance
+        <span>Comparison</span>
+    </h1>
+
+    <p>
+        Compare the performance of the machine learning models
+        used by PlacementAI to predict student placement readiness.
+    </p>
+
+</section>
+
+
+{% if models %}
+
+
+<!-- ================= BEST MODEL ================= -->
+{#
+    Guarded. With no results loaded, best_model is None and Jinja rendered
+    `{{ best_model.name }}` as an empty string -- an empty trophy card with a stray "%".
+#}
+
+{% if best_model %}
+
+<section class="best-model-card">
+
+    <div class="best-model-icon" aria-hidden="true">
+        &#127942;
+    </div>
+
+    <div class="best-model-content">
+
+        <p>
+            BEST PERFORMING MODEL
+        </p>
+
+        <h2>
+            {{ best_model.name }}
+        </h2>
+
+        <span>
+            {% if best_model.cv_f1 is not none %}
+                Selected on the highest mean F1 score across
+                5-fold cross-validation.
+            {% else %}
+                Selected based on the highest F1 Score.
+            {% endif %}
+        </span>
+
+    </div>
+
+    <div class="best-model-score">
+
+        <strong>
+            {% if best_model.cv_f1 is not none %}
+                {{ best_model.cv_f1 }}%
+            {% else %}
+                {{ best_model.f1 }}%
+            {% endif %}
+        </strong>
+
+        <span>
+            {% if best_model.cv_f1 is not none %}
+                CV F1 Score
+            {% else %}
+                F1 Score
+            {% endif %}
+        </span>
+
+    </div>
+
+</section>
+
+{% endif %}
+
+
+<!-- ================= MODEL CARDS ================= -->
+
+<section class="model-grid">
+
+    {% for entry in models %}
+
+    <div class="model-card {% if best_model and entry.name == best_model.name %}best{% endif %}">
+
+        <div class="model-card-header">
+
+            <div>
+
+                <p>
+                    MACHINE LEARNING MODEL
+                </p>
+
+                <h2>
+                    {{ entry.name }}
+                </h2>
+
+            </div>
+
+            {% if best_model and entry.name == best_model.name %}
+
+            <span class="best-badge">
+                BEST
+            </span>
+
+            {% endif %}
+
+        </div>
+
+
+        {#
+            One loop instead of five copy-pasted metric blocks. `is not none` rather than
+            a truthiness test, so a genuine 0% still renders its bar.
+        #}
+        {% for label, value in [
+            ("Accuracy",  entry.accuracy),
+            ("Precision", entry.precision),
+            ("Recall",    entry.recall),
+            ("F1 Score",  entry.f1),
+            ("ROC-AUC",   entry.roc_auc)
+        ] %}
+
+        <div class="metric">
+
+            <div class="metric-info">
+
+                <span>
+                    {{ label }}
+                </span>
+
+                <strong>
+                    {% if value is not none %}{{ value }}%{% else %}&mdash;{% endif %}
+                </strong>
+
+            </div>
+
+            <div class="metric-track">
+
+                <div class="metric-fill"
+                     style="--metric-width: {{ value if value is not none else 0 }}%;">
+                </div>
+
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+
+        {% if entry.cv_f1 is not none %}
+
+        <div class="model-cv-note">
+
+            <span>
+                Cross-validated F1
+            </span>
+
+            <strong>
+                {{ entry.cv_f1 }}%
+                {% if entry.cv_f1_std is not none %}
+                    &plusmn; {{ entry.cv_f1_std }}
+                {% endif %}
+            </strong>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+    {% endfor %}
+
+</section>
+
+
+<!-- ================= EXPLANATION ================= -->
+
+<section class="model-explanation">
+
+    <div class="explanation-icon" aria-hidden="true">
+        &#128161;
+    </div>
+
+    <div>
+
+        <h2>
+            Why Compare Multiple Models?
+        </h2>
+
+        <p>
+            PlacementAI evaluates multiple machine learning
+            algorithms rather than relying on a single model.
+            This helps identify the model that provides the
+            strongest predictive performance for the dataset.
+        </p>
+
+        <p>
+            Accuracy, Precision, Recall, F1 Score and ROC-AUC
+            are measured on a held-out 20% test split. The model
+            that is actually saved and used is chosen on the mean
+            F1 score across 5-fold cross-validation instead,
+            because a single split of a 401-row dataset moves by
+            several points depending on which rows happen to land
+            in the test set.
+        </p>
+
+    </div>
+
+</section>
+
+
+{% else %}
+
+
+<section class="analytics-empty">
+
+    <div aria-hidden="true">
+        &#128202;
+    </div>
+
+    <h3>
+        No model metrics available
+    </h3>
+
+    <p>
+        Run <code>python train_model.py</code> to train the
+        models and generate the comparison.
+    </p>
+
+</section>
+
+
+{% endif %}
+
+
+<!-- ================= ACTIONS ================= -->
+
+<div class="model-actions">
+
+    <a href="{{ url_for('assessment') }}"
+       class="btn">
+
+        Take Assessment &rarr;
+
+    </a>
+
+    <a href="{{ url_for('home') }}"
+       class="secondary-btn">
+
+        Back to Home
+
+    </a>
+
+</div>
+
+
+{% endblock %}

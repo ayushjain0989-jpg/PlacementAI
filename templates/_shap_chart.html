@@ -1,0 +1,89 @@
+{#
+    The SHAP contribution chart.
+
+    Reads `shap_data` from the context: a list of
+    {feature, value, width, direction, explanation} built by explain.build_shap_data.
+
+    The bar width comes from the --bar-width custom property. That was already the
+    intent, but a duplicate `.shap-bar { width: 0 }` later in style.css overrode it, so
+    every bar on the report page rendered at zero width; prediction_details.html hid the
+    problem with an inline <script> that set style.width directly. The duplicate rule and
+    that script are both gone.
+
+    The malformed `<div class="shap-bar" style="..."` -- opening tag never closed with a
+    `>` -- is fixed here too. Browsers recovered from it by swallowing the following
+    `</div>`, which silently unbalanced the rest of the chart markup.
+#}
+
+{% if shap_data %}
+
+    <div class="shap-chart">
+
+        {% for item in shap_data %}
+
+            <div class="shap-item">
+
+                <div class="shap-label">
+
+                    <span>
+                        {{ item.feature }}
+                    </span>
+
+                    <strong class="shap-value {{ item.direction }}">
+                        {% if item.value >= 0 %}+{% endif %}{{ item.value }}
+                    </strong>
+
+                </div>
+
+                <div class="shap-track"
+                     role="img"
+                     aria-label="{{ item.feature }}: {{ item.explanation }}">
+
+                    <div class="shap-bar {{ item.direction }}"
+                         style="--bar-width: {{ item.width }}%;"></div>
+
+                </div>
+
+                {% if item.explanation %}
+
+                    <p class="shap-explanation">
+                        {{ item.explanation }}
+                    </p>
+
+                {% endif %}
+
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+
+    <!-- SHAP LEGEND -->
+
+    <div class="legend">
+
+        <span>
+            <i class="legend-dot positive" aria-hidden="true"></i>
+            Increases prediction
+        </span>
+
+        <span>
+            <i class="legend-dot negative" aria-hidden="true"></i>
+            Decreases prediction
+        </span>
+
+    </div>
+
+{% else %}
+
+    <div class="shap-empty">
+
+        <p>
+            SHAP explanation is currently unavailable for
+            this assessment.
+        </p>
+
+    </div>
+
+{% endif %}

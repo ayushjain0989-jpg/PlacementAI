@@ -1,0 +1,31 @@
+{# Recommendations. Reads `recommendations`. #}
+
+{% if recommendations %}
+
+    <ol class="recommendation-list">
+
+        {% for recommendation in recommendations %}
+
+            <li class="recommendation-item">
+
+                <span class="recommendation-number" aria-hidden="true">
+                    {{ loop.index }}
+                </span>
+
+                <p>
+                    {{ recommendation }}
+                </p>
+
+            </li>
+
+        {% endfor %}
+
+    </ol>
+
+{% else %}
+
+    <p class="empty-note">
+        No specific recommendations for this profile.
+    </p>
+
+{% endif %}

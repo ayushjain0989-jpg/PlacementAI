@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %} | {{ title }}{% endblock %}
+
+{% block main_class %}error-page{% endblock %}
+
+{#
+    The page behind the 404 and 500 handlers.
+
+    Before this existed, an unknown /history/<id> rendered prediction_details.html with
+    record=None; the avatar's `record.student_name[0]` then raised UndefinedError and the
+    user got a 500 and a traceback for what was really a typo in the URL. The routes
+    abort(404) now and land here.
+
+    Reads `code`, `title` and `message`.
+#}
+
+{% block content %}
+
+
+<section class="error-panel">
+
+    <p class="error-code" aria-hidden="true">
+        {{ code }}
+    </p>
+
+    <h1>
+        {{ title }}
+    </h1>
+
+    <p class="error-detail">
+        {{ message }}
+    </p>
+
+
+    <div class="error-actions">
+
+        <a href="{{ url_for('home') }}" class="btn">
+            Back to Home
+        </a>
+
+        <a href="{{ url_for('history') }}" class="secondary-btn">
+            View History
+        </a>
+
+        <a href="{{ url_for('assessment') }}" class="secondary-btn">
+            New Assessment
+        </a>
+
+    </div>
+
+</section>
+
+
+{% endblock %}

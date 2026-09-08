@@ -1,0 +1,78 @@
+{#
+    Flash messages and the `errors` list, rendered on every page via base.html.
+
+    `role="alert"` + aria-live="assertive" on the error block so a screen reader announces
+    a failed submission instead of leaving the user to discover it by tabbing back up.
+    The success block is polite -- it is confirmation, not an interruption.
+#}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+
+    {% if messages %}
+
+        {% for category, message in messages %}
+
+            <div class="{% if category == 'error' %}error-message{% else %}success-message{% endif %}"
+                 role="{% if category == 'error' %}alert{% else %}status{% endif %}"
+                 aria-live="{% if category == 'error' %}assertive{% else %}polite{% endif %}">
+
+                <span class="notice-icon" aria-hidden="true">
+                    {% if category == 'error' %}&#9888;{% else %}&#10003;{% endif %}
+                </span>
+
+                <span>
+                    {{ message }}
+                </span>
+
+            </div>
+
+        {% endfor %}
+
+    {% endif %}
+
+{% endwith %}
+
+
+{% if errors %}
+
+    <div class="error-message"
+         role="alert"
+         aria-live="assertive">
+
+        <span class="notice-icon" aria-hidden="true">
+            &#9888;
+        </span>
+
+        {% if errors|length == 1 %}
+
+            <span>
+                {{ errors[0] }}
+            </span>
+
+        {% else %}
+
+            <div>
+
+                <strong>
+                    Please fix the following:
+                </strong>
+
+                <ul class="error-list">
+
+                    {% for message in errors %}
+
+                        <li>
+                            {{ message }}
+                        </li>
+
+                    {% endfor %}
+
+                </ul>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+{% endif %}

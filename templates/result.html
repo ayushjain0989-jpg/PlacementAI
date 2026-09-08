@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+
+{% import "_macros.html" as ui %}
+
+{% block title %} | Placement Report{% endblock %}
+
+{% block main_class %}dashboard{% endblock %}
+
+{#
+    The report for one assessment.
+
+    Reached by redirect from POST /predict rather than being rendered by it, so a refresh
+    re-fetches GET /report/<id> instead of replaying the POST and returning 405. The URL
+    is also shareable now, which it was not before.
+
+    `status` and `status_description` arrive ready-made. The template used to re-derive
+    both from `probability` with two copies of `{% if probability >= 75 %}`, duplicating
+    thresholds that already live in config.py.
+#}
+
+{% block content %}
+
+
+<!-- =================================================
+     DASHBOARD HEADER
+================================================== -->
+
+<div class="dashboard-header">
+
+    <div>
+
+        <p class="dashboard-label">
+            AI PLACEMENT ANALYSIS
+        </p>
+
+        <h1>
+            Hello, {{ name }} <span aria-hidden="true">&#128075;</span>
+        </h1>
+
+        <p>
+            Here is your personalized placement
+            readiness report.
+        </p>
+
+    </div>
+
+
+    {% if record %}
+
+    <div class="report-meta">
+
+        <p class="report-date">
+            {{ record.assessment_date }}
+        </p>
+
+        <div class="report-tools">
+
+            <a class="secondary-btn small"
+               href="{{ url_for('export_prediction', prediction_id=record.id) }}">
+                Download CSV
+            </a>
+
+            <a class="secondary-btn small"
+               href="{{ url_for('print_prediction', prediction_id=record.id) }}"
+               target="_blank"
+               rel="noopener">
+                Print / PDF
+            </a>
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+
+<!-- =================================================
+     SCORE CARDS
+================================================== -->
+
+<div class="dashboard-grid">
+
+
+    <!-- PLACEMENT PROBABILITY -->
+
+    <div class="dashboard-card score-card">
+
+        <div class="card-heading">
+            Placement Probability
+        </div>
+
+        <div class="score-circle"
+             style="--score: {{ probability }}">
+
+            <div class="score-inner">
+
+                <strong>
+                    {{ probability }}%
+                </strong>
+
+                <span>
+                    Probability
+                </span>
+
+            </div>
+
+        </div>
+
+        <div class="status-badge">
+            {{ ui.status_badge(status) }}
+        </div>
+
+    </div>
+
+
+    <!-- READINESS STATUS -->
+
+    <div class="dashboard-card status-card">
+
+        <div class="card-heading">
+            Readiness Status
+        </div>
+
+        <h2>
+            {{ status }}
+        </h2>
+
+        <p class="status-description">
+            {{ status_description }}
+        </p>
+
+        <div class="status-prediction">
+
+            <span>
+                Model prediction
+            </span>
+
+            {{ ui.prediction_badge(prediction) }}
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =================================================
+     SHAP EXPLANATION
+================================================== -->
+
+<div class="dashboard-card shap-card">
+
+    <div class="section-header">
+
+        <div>
+
+            <span class="section-icon" aria-hidden="true">
+                &#128269;
+            </span>
+
+            <h2>
+                Why Did AI Make This Prediction?
+            </h2>
+
+        </div>
+
+        <p>
+            These are the factors that had the
+            strongest influence on your prediction.
+        </p>
+
+    </div>
+
+    {% include "_shap_chart.html" %}
+
+</div>
+
+
+<!-- =================================================
+     SKILL GAP + RECOMMENDATIONS
+================================================== -->
+
+<div class="two-column">
+
+
+    <div class="dashboard-card">
+
+        <div class="section-header">
+
+            <div>
+
+                <span class="section-icon" aria-hidden="true">
+                    &#9888;
+                </span>
+
+                <h2>
+                    Skills to Improve
+                </h2>
+
+            </div>
+
+        </div>
+
+        {% include "_skill_gaps.html" %}
+
+    </div>
+
+
+    <div class="dashboard-card">
+
+        <div class="section-header">
+
+            <div>
+
+                <span class="section-icon" aria-hidden="true">
+                    &#128161;
+                </span>
+
+                <h2>
+                    Personalized Recommendations
+                </h2>
+
+            </div>
+
+        </div>
+
+        {% include "_recommendations.html" %}
+
+    </div>
+
+
+</div>
+
+
+<!-- =================================================
+     ASSESSMENT SUMMARY
+================================================== -->
+
+<div class="dashboard-card profile-card">
+
+    <div class="section-header">
+
+        <div>
+
+            <span class="section-icon" aria-hidden="true">
+                &#128202;
+            </span>
+
+            <h2>
+                Assessment Summary
+            </h2>
+
+        </div>
+
+    </div>
+
+    {# The partial reads `student_data`; this route names the same dict `data`. #}
+    {% set student_data = data %}
+
+    {% include "_profile_summary.html" %}
+
+</div>
+
+
+<!-- =================================================
+     ACTION BUTTONS
+================================================== -->
+
+<div class="dashboard-actions">
+
+    <a href="{{ url_for('assessment') }}"
+       class="btn">
+
+        Take New Assessment &rarr;
+
+    </a>
+
+    <a href="{{ url_for('history') }}"
+       class="secondary-btn">
+
+        View History
+
+    </a>
+
+    <a href="{{ url_for('home') }}"
+       class="secondary-btn">
+
+        Back to Home
+
+    </a>
+
+</div>
+
+
+{% endblock %}

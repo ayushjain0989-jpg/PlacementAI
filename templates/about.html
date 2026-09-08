@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %} | About{% endblock %}
+
+{% block main_class %}about-page{% endblock %}
+
+{% block content %}
+
+
+<section class="about-section">
+
+    <div class="about-container">
+
+        <div class="about-header">
+
+            <div class="about-icon" aria-hidden="true">
+                &#10022;
+            </div>
+
+            <h1>About PlacementAI</h1>
+
+            <p class="about-subtitle">
+                AI-Based Student Placement Readiness Predictor
+            </p>
+
+        </div>
+
+
+        <!-- Project Description -->
+        <div class="about-card">
+
+            <h2>What is PlacementAI?</h2>
+
+            <p>
+                PlacementAI is an AI-based student placement
+                readiness prediction system designed to help
+                students understand their preparedness for
+                campus placement opportunities.
+            </p>
+
+            <p>
+                The system analyzes various academic and
+                skill-related factors and uses Machine Learning
+                models to predict a student's placement
+                readiness.
+            </p>
+
+        </div>
+
+
+        <!-- How It Works -->
+        <div class="about-card">
+
+            <h2>How It Works</h2>
+
+            <div class="about-steps">
+
+                <div class="about-step">
+                    <div class="step-number">1</div>
+                    <div>
+                        <h3>Student Assessment</h3>
+                        <p>
+                            Students provide their academic,
+                            internship, training, project and
+                            communication information.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="about-step">
+                    <div class="step-number">2</div>
+                    <div>
+                        <h3>AI Prediction</h3>
+                        <p>
+                            Machine Learning models analyze the
+                            submitted information and predict
+                            placement probability.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="about-step">
+                    <div class="step-number">3</div>
+                    <div>
+                        <h3>Skill Gap Analysis</h3>
+                        <p>
+                            The system identifies areas where
+                            the student can improve.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="about-step">
+                    <div class="step-number">4</div>
+                    <div>
+                        <h3>Personalized Recommendations</h3>
+                        <p>
+                            Students receive recommendations
+                            to improve their placement readiness.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- How the model is built -->
+        {#
+            Added because the assessment form's options are now generated from the
+            trained model rather than typed by hand, which is worth stating plainly:
+            it is the difference between a dropdown that influences the prediction and
+            one that quietly does nothing.
+        #}
+        <div class="about-card">
+
+            <h2>How the Model Is Built</h2>
+
+            <p>
+                Three algorithms &mdash; Random Forest, XGBoost and
+                CatBoost &mdash; are trained on the same dataset and
+                compared using stratified 5-fold cross-validation.
+                The model with the best mean F1 score is saved and
+                used for every prediction.
+            </p>
+
+            <p>
+                The training script also records the exact categories
+                and numeric ranges it learned. The assessment form is
+                built from that record, so every option you can choose
+                is one the model was actually trained on.
+            </p>
+
+        </div>
+
+
+        <!-- Technologies -->
+        <div class="about-card">
+
+            <h2>Technologies Used</h2>
+
+            <div class="technology-grid">
+
+                <div class="technology-item">
+                    <strong>Python</strong>
+                    <span>Programming Language</span>
+                </div>
+
+                <div class="technology-item">
+                    <strong>Flask</strong>
+                    <span>Web Framework</span>
+                </div>
+
+                <div class="technology-item">
+                    <strong>CatBoost</strong>
+                    <span>Machine Learning</span>
+                </div>
+
+                <div class="technology-item">
+                    <strong>XGBoost</strong>
+                    <span>Machine Learning</span>
+                </div>
+
+                <div class="technology-item">
+                    <strong>Random Forest</strong>
+                    <span>Machine Learning</span>
+                </div>
+
+                <div class="technology-item">
+                    <strong>SHAP</strong>
+                    <span>Explainable AI</span>
+                </div>
+
+                <div class="technology-item">
+                    <strong>SQLite</strong>
+                    <span>Database</span>
+                </div>
+
+                <div class="technology-item">
+                    <strong>Chart.js</strong>
+                    <span>Analytics Charts</span>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Objective -->
+        <div class="about-card">
+
+            <h2>Project Objective</h2>
+
+            <p>
+                The main objective of PlacementAI is to provide
+                students with an intelligent and easy-to-understand
+                assessment of their placement preparedness.
+            </p>
+
+            <p>
+                Instead of providing only a prediction, the system
+                also explains important factors influencing the
+                prediction and provides actionable recommendations
+                for improvement.
+            </p>
+
+        </div>
+
+
+        <!-- Call to Action -->
+        <div class="about-cta">
+
+            <h2>Ready to Check Your Readiness?</h2>
+
+            <p>
+                Take the placement assessment and discover
+                your current readiness level.
+            </p>
+
+            <a href="{{ url_for('assessment') }}" class="primary-button">
+                Start Assessment &rarr;
+            </a>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+{% endblock %}

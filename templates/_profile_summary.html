@@ -1,0 +1,55 @@
+{#
+    Assessment summary table. Reads `student_data` and `communication_max`.
+
+    `communication_max` comes from the recorded numeric range instead of being written
+    into the template. It was hardcoded as "/4" on both the report and the details page
+    while the data -- and now the form -- goes up to 5, so a student who answered
+    "5 - Excellent" was shown "5/4".
+#}
+
+{% set max_communication = communication_max or 5 %}
+
+<div class="profile-grid">
+
+    {#
+        Ordered pairs rather than eight copy-pasted blocks. `.get` because a record
+        written by an older version of the app may not carry every key, and Jinja would
+        otherwise print an empty string with a stray unit next to it.
+    #}
+    {% set rows = [
+        ("CGPA",            student_data.get("Cgpa"),                    "/10"),
+        ("10th Marks",      student_data.get("10th marks"),              "%"),
+        ("12th Marks",      student_data.get("12th marks"),              "%"),
+        ("Communication",   student_data.get("Communication level"),     "/" ~ max_communication),
+        ("10th Board",      student_data.get("10th board"),              ""),
+        ("12th Board",      student_data.get("12th board"),              ""),
+        ("Stream",          student_data.get("Stream"),                  ""),
+        ("Gender",          student_data.get("Gender"),                  ""),
+        ("Internship",      student_data.get("Internships(Y/N)"),        ""),
+        ("Training",        student_data.get("Training(Y/N)"),           ""),
+        ("Project",         student_data.get("Innovative Project(Y/N)"), ""),
+        ("Technical Course", student_data.get("Technical Course(Y/N)"),  ""),
+        ("5th Sem Backlog", student_data.get("Backlog in 5th sem"),      "")
+    ] %}
+
+    {% for label, value, unit in rows %}
+
+        <div class="profile-item">
+
+            <span>
+                {{ label }}
+            </span>
+
+            <strong>
+                {% if value is not none and value != "" %}
+                    {{ value }}{{ unit }}
+                {% else %}
+                    &mdash;
+                {% endif %}
+            </strong>
+
+        </div>
+
+    {% endfor %}
+
+</div>

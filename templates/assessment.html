@@ -1,0 +1,410 @@
+{% extends "base.html" %}
+
+{% block title %} | Student Assessment{% endblock %}
+
+{% block main_class %}assessment-section{% endblock %}
+
+{#
+    Nothing on this form is typed by hand any more.
+
+    Every <option> comes from `options`, which app.py builds from
+    models/feature_options.pkl -- the categories the fitted OneHotEncoder actually
+    learned. The previous version hardcoded them, and they had drifted: `State` and
+    `Other` for the boards and `Electronics` / `Mechanical` / `Civil` for the stream are
+    not in the training data at all. OneHotEncoder(handle_unknown="ignore") answers an
+    unseen category with an all-zero row rather than an error, so choosing one of those
+    changed the prediction by exactly nothing. Generating the options removes the only
+    way that can happen again.
+
+    `submitted` holds the raw strings from a rejected submission so the form comes back
+    filled in instead of blank.
+#}
+
+{% set submitted = submitted or {} %}
+
+
+{#
+    Renders one <select>. `field` is both the input name and the key into
+    options.choices, which is why the two vocabularies only meet in options.py.
+#}
+{% macro choice_field(field, label, placeholder, wide=false, hint=None) %}
+
+    <div class="form-group {% if wide %}full-width{% endif %}">
+
+        <label for="{{ field }}">
+            {{ label }}
+        </label>
+
+        <select id="{{ field }}"
+                name="{{ field }}"
+                required
+                {% if hint %}aria-describedby="{{ field }}-hint"{% endif %}>
+
+            <option value="">
+                {{ placeholder }}
+            </option>
+
+            {% for value in options.choices.get(field, []) %}
+
+                <option value="{{ value }}"
+                        {% if submitted.get(field) == value %}selected{% endif %}>
+                    {{ value }}
+                </option>
+
+            {% endfor %}
+
+        </select>
+
+        {% if hint %}
+            <small id="{{ field }}-hint">
+                {{ hint }}
+            </small>
+        {% endif %}
+
+    </div>
+
+{% endmacro %}
+
+
+{#
+    Renders one number input. min/max/step come from the recorded numeric ranges, so the
+    browser and the server-side check in forms.py agree on the bounds by construction.
+#}
+{% macro number_field(field, label, placeholder, wide=false, hint=None) %}
+
+    {% set spec = options.numeric.get(field, {}) %}
+
+    <div class="form-group {% if wide %}full-width{% endif %}">
+
+        <label for="{{ field }}">
+            {{ label }}
+        </label>
+
+        <input type="number"
+               id="{{ field }}"
+               name="{{ field }}"
+               value="{{ submitted.get(field, '') }}"
+               {% if spec.min is not none %}min="{{ spec.min }}"{% endif %}
+               {% if spec.max is not none %}max="{{ spec.max }}"{% endif %}
+               step="{{ spec.step or 0.01 }}"
+               placeholder="{{ placeholder }}"
+               required
+               {% if hint %}aria-describedby="{{ field }}-hint"{% endif %}>
+
+        {% if hint %}
+            <small id="{{ field }}-hint">
+                {{ hint }}
+            </small>
+        {% endif %}
+
+    </div>
+
+{% endmacro %}
+
+
+{% block content %}
+
+
+<div class="assessment-box">
+
+
+    <!-- HEADER -->
+
+    <div class="assessment-header">
+
+        <p class="section-tag">
+            AI READINESS ASSESSMENT
+        </p>
+
+        <h1>
+            Evaluate Your
+            <span>Placement Readiness</span>
+        </h1>
+
+        <p>
+            Provide accurate information about your academic
+            performance, experience and skills. Our AI model
+            will analyze your profile and generate a personalized
+            placement readiness report.
+        </p>
+
+    </div>
+
+
+    {# The error banner used to live here; base.html renders it above this box now, so
+       every page gets it instead of only this one. #}
+
+
+    <!-- PROGRESS -->
+
+    <div class="assessment-progress">
+
+        <div class="progress-info">
+
+            <span>
+                Assessment Form
+            </span>
+
+            <strong>
+                Complete all fields
+            </strong>
+
+        </div>
+
+        <div class="progress-track">
+
+            <div class="progress-fill"></div>
+
+        </div>
+
+    </div>
+
+
+    <!-- FORM -->
+
+    <form action="{{ url_for('predict') }}" method="POST" novalidate>
+
+        <input type="hidden"
+               name="csrf_token"
+               value="{{ csrf_token }}">
+
+
+        <!-- ================= STUDENT INFORMATION ================= -->
+
+        <div class="form-section">
+
+            <div class="form-section-header">
+
+                <div class="form-section-icon" aria-hidden="true">
+                    &#128100;
+                </div>
+
+                <div>
+
+                    <h2>
+                        Student Information
+                    </h2>
+
+                    <p>
+                        Basic information about the student.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="form-grid">
+
+
+                <!-- NAME -->
+
+                <div class="form-group">
+
+                    <label for="name">
+                        Student Name
+                    </label>
+
+                    <input type="text"
+                           id="name"
+                           name="name"
+                           value="{{ submitted.get('name', '') }}"
+                           maxlength="100"
+                           placeholder="Enter your full name"
+                           autocomplete="name"
+                           required>
+
+                </div>
+
+
+                {{ choice_field("gender", "Gender", "Select Gender") }}
+
+            </div>
+
+        </div>
+
+
+        <!-- ================= ACADEMIC INFORMATION ================= -->
+
+        <div class="form-section">
+
+            <div class="form-section-header">
+
+                <div class="form-section-icon" aria-hidden="true">
+                    &#127891;
+                </div>
+
+                <div>
+
+                    <h2>
+                        Academic Performance
+                    </h2>
+
+                    <p>
+                        Enter your academic qualifications and
+                        current CGPA.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="form-grid">
+
+                {{ choice_field("tenth_board", "10th Board", "Select Board") }}
+
+                {{ number_field("tenth_marks", "10th Marks (%)", "Example: 85") }}
+
+                {{ choice_field("twelfth_board", "12th Board", "Select Board") }}
+
+                {{ number_field("twelfth_marks", "12th Marks (%)", "Example: 80") }}
+
+                {{ choice_field(
+                    "stream",
+                    "Engineering Stream",
+                    "Select Your Stream",
+                    wide=true,
+                    hint="Streams with very few records in the training data are grouped under \"Other\"."
+                ) }}
+
+                {{ number_field(
+                    "cgpa",
+                    "Current CGPA",
+                    "Example: 8.2",
+                    hint="Enter CGPA on a 10-point scale."
+                ) }}
+
+                {{ choice_field("backlog", "5th Semester Backlog", "Select") }}
+
+            </div>
+
+        </div>
+
+
+        <!-- ================= EXPERIENCE & SKILLS ================= -->
+
+        <div class="form-section">
+
+            <div class="form-section-header">
+
+                <div class="form-section-icon" aria-hidden="true">
+                    &#128188;
+                </div>
+
+                <div>
+
+                    <h2>
+                        Experience &amp; Skills
+                    </h2>
+
+                    <p>
+                        Tell us about your practical experience,
+                        training and communication skills.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="form-grid">
+
+                {{ choice_field("internship", "Internship Experience", "Select") }}
+
+                {{ choice_field("training", "Technical Training", "Select") }}
+
+                {{ choice_field("project", "Innovative Project", "Select") }}
+
+                {{ choice_field("technical_course", "Technical Course", "Select") }}
+
+
+                <!-- COMMUNICATION -->
+                {#
+                    The scale runs over whatever range the data supports. It was capped at
+                    4 here while the dataset uses 1-5, so 70 of 401 training rows
+                    described a level this form could not express.
+                #}
+
+                <div class="form-group full-width">
+
+                    <label for="communication">
+                        Communication Level
+                    </label>
+
+                    <select id="communication"
+                            name="communication"
+                            required>
+
+                        <option value="">
+                            Select Communication Level
+                        </option>
+
+                        {% for value, label in options.communication_levels %}
+
+                            <option value="{{ value }}"
+                                    {% if submitted.get('communication') == value|string %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================= AI NOTICE ================= -->
+
+        <div class="ai-notice">
+
+            <div class="ai-notice-icon" aria-hidden="true">
+                &#10022;
+            </div>
+
+            <div>
+
+                <strong>
+                    AI-Powered Analysis
+                </strong>
+
+                <p>
+                    Your profile will be analyzed using machine
+                    learning models. SHAP Explainable AI will
+                    help identify the factors influencing your
+                    prediction.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================= SUBMIT ================= -->
+
+        <button type="submit"
+                class="btn assessment-submit">
+
+            Analyze My Placement Readiness &rarr;
+
+        </button>
+
+
+        <p class="form-note">
+
+            Please make sure all information is accurate before
+            submitting the assessment.
+
+        </p>
+
+
+    </form>
+
+</div>
+
+
+{% endblock %}

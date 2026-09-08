@@ -1,0 +1,39 @@
+{# Skill gaps. Reads `skills`. #}
+
+{% if skills %}
+
+    <div class="gap-list">
+
+        {% for skill in skills %}
+
+            <div class="gap-item">
+
+                <span>
+                    {{ skill }}
+                </span>
+
+                <span class="improve-tag">
+                    Improve
+                </span>
+
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+{% else %}
+
+    <div class="success-message">
+
+        <span class="notice-icon" aria-hidden="true">
+            &#10003;
+        </span>
+
+        <span>
+            No major skill gaps detected.
+        </span>
+
+    </div>
+
+{% endif %}

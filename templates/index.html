@@ -1,0 +1,441 @@
+{% extends "base.html" %}
+
+{% block title %} | Student Placement Readiness Predictor{% endblock %}
+
+{% block main_class %}home-page{% endblock %}
+
+{% block content %}
+
+
+<!-- ================= HERO SECTION ================= -->
+
+<section class="hero">
+
+    <div class="hero-content">
+
+        <div class="tag">
+            &#10022; AI-POWERED CAREER READINESS
+        </div>
+
+        <h1>
+            Discover Your
+            <span>Placement Readiness</span>
+        </h1>
+
+        <p class="description">
+            PlacementAI uses Machine Learning and Explainable AI
+            to analyze your academic performance, experience,
+            communication skills and technical profile.
+        </p>
+
+        <div class="hero-buttons">
+
+            <a href="{{ url_for('assessment') }}" class="btn">
+                Start Assessment &rarr;
+            </a>
+
+            <a href="#features" class="secondary-btn">
+                Learn More
+            </a>
+
+        </div>
+
+        <div class="hero-stats">
+
+            <div class="stat">
+                <strong>AI</strong>
+                <span>Powered</span>
+            </div>
+
+            <div class="stat">
+                <strong>3+</strong>
+                <span>ML Models</span>
+            </div>
+
+            <div class="stat">
+                <strong>SHAP</strong>
+                <span>Explainable AI</span>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= AI SCORE CARD ================= -->
+    {#
+        Illustrative only -- these are not real numbers. Marked aria-hidden so a screen
+        reader does not read out "82% probability" as though it were the user's result.
+    #}
+
+    <div class="hero-card" aria-hidden="true">
+
+        <div class="card-header">
+
+            <div>
+                <span class="small-label">
+                    AI ANALYSIS
+                </span>
+
+                <h3>Placement Readiness</h3>
+            </div>
+
+            <div class="ai-icon">
+                &#10022;
+            </div>
+
+        </div>
+
+
+        <div class="score-circle">
+
+            <div class="score-inner">
+                <strong>82%</strong>
+                <span>Probability</span>
+            </div>
+
+        </div>
+
+
+        <div class="status">
+            &#9679; High Readiness
+        </div>
+
+
+        <div class="mini-bars">
+
+            <div class="skill-bar">
+
+                <div class="skill-info">
+                    <span>Academic Performance</span>
+                    <strong>88%</strong>
+                </div>
+
+                <div class="bar">
+                    <div class="bar-fill academic"></div>
+                </div>
+
+            </div>
+
+
+            <div class="skill-bar">
+
+                <div class="skill-info">
+                    <span>Technical Profile</span>
+                    <strong>80%</strong>
+                </div>
+
+                <div class="bar">
+                    <div class="bar-fill technical"></div>
+                </div>
+
+            </div>
+
+
+            <div class="skill-bar">
+
+                <div class="skill-info">
+                    <span>Communication</span>
+                    <strong>72%</strong>
+                </div>
+
+                <div class="bar">
+                    <div class="bar-fill communication"></div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="card-footer">
+            <span>&#10003; AI Prediction</span>
+            <span>&#10003; SHAP Analysis</span>
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= HOW IT WORKS ================= -->
+
+<section class="how-it-works">
+
+    <div class="section-heading">
+
+        <p class="section-tag">
+            HOW IT WORKS
+        </p>
+
+        <h2>
+            From Student Profile to
+            <span>AI Insights</span>
+        </h2>
+
+        <p>
+            Get a personalized understanding of your placement
+            readiness in just a few simple steps.
+        </p>
+
+    </div>
+
+
+    <div class="steps">
+
+        <div class="step">
+
+            <div class="step-number">
+                01
+            </div>
+
+            <div class="step-icon" aria-hidden="true">
+                &#128221;
+            </div>
+
+            <h3>Enter Your Profile</h3>
+
+            <p>
+                Provide your academic details, experience,
+                projects and communication information.
+            </p>
+
+        </div>
+
+
+        <div class="step">
+
+            <div class="step-number">
+                02
+            </div>
+
+            <div class="step-icon" aria-hidden="true">
+                &#129302;
+            </div>
+
+            <h3>AI Prediction</h3>
+
+            <p>
+                Machine learning models analyze your profile
+                and estimate your placement probability.
+            </p>
+
+        </div>
+
+
+        <div class="step">
+
+            <div class="step-number">
+                03
+            </div>
+
+            <div class="step-icon" aria-hidden="true">
+                &#128202;
+            </div>
+
+            <h3>Understand Your Result</h3>
+
+            <p>
+                Explore skill gaps, recommendations and
+                factors influencing your prediction.
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= FEATURES ================= -->
+
+<section class="features" id="features">
+
+    <div class="section-heading">
+
+        <p class="section-tag">
+            KEY FEATURES
+        </p>
+
+        <h2>
+            Everything You Need to
+            <span>Prepare Better</span>
+        </h2>
+
+    </div>
+
+
+    <div class="feature-container">
+
+
+        <div class="feature-card">
+
+            <div class="feature-icon" aria-hidden="true">
+                &#129302;
+            </div>
+
+            <h3>AI Prediction</h3>
+
+            <p>
+                Machine learning models estimate your
+                probability of placement based on your profile.
+            </p>
+
+            <span class="feature-link">
+                Smart Prediction &rarr;
+            </span>
+
+        </div>
+
+
+        <div class="feature-card">
+
+            <div class="feature-icon" aria-hidden="true">
+                &#128202;
+            </div>
+
+            <h3>Skill Gap Analysis</h3>
+
+            <p>
+                Identify the areas that require improvement
+                before attending placement drives.
+            </p>
+
+            <span class="feature-link">
+                Find Your Gaps &rarr;
+            </span>
+
+        </div>
+
+
+        <div class="feature-card">
+
+            <div class="feature-icon" aria-hidden="true">
+                &#128161;
+            </div>
+
+            <h3>Personalized Guidance</h3>
+
+            <p>
+                Receive recommendations tailored to your
+                individual assessment results.
+            </p>
+
+            <span class="feature-link">
+                Get Recommendations &rarr;
+            </span>
+
+        </div>
+
+
+        <div class="feature-card">
+
+            <div class="feature-icon" aria-hidden="true">
+                &#128269;
+            </div>
+
+            <h3>Explainable AI</h3>
+
+            <p>
+                SHAP analysis helps you understand which
+                factors influence your placement prediction.
+            </p>
+
+            <span class="feature-link">
+                Understand AI &rarr;
+            </span>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= PROJECT INFO ================= -->
+
+<section class="project-info">
+
+    <div class="project-content">
+
+        <p class="section-tag">
+            ABOUT THE PROJECT
+        </p>
+
+        <h2>
+            Make Your Placement
+            <span>Preparation Smarter</span>
+        </h2>
+
+        <p>
+            PlacementAI is an AI-based student placement
+            readiness prediction system designed to help
+            students understand their current preparation
+            level and identify areas that can be improved.
+        </p>
+
+        <p>
+            The system combines Machine Learning models with
+            Explainable AI techniques to provide meaningful
+            and understandable placement insights.
+        </p>
+
+        <a href="{{ url_for('assessment') }}" class="btn">
+            Evaluate My Readiness &rarr;
+        </a>
+
+    </div>
+
+
+    <div class="technology-card">
+
+        <h3>Technology Stack</h3>
+
+        <div class="tech-list">
+
+            <span>Python</span>
+            <span>Flask</span>
+            <span>Scikit-learn</span>
+            <span>Random Forest</span>
+            <span>XGBoost</span>
+            <span>CatBoost</span>
+            <span>SHAP</span>
+            <span>Pandas</span>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= CTA ================= -->
+
+<section class="cta">
+
+    <div>
+
+        <p class="section-tag">
+            READY TO BEGIN?
+        </p>
+
+        <h2>
+            Find Out How Ready You Are
+            <span>for Your Placement</span>
+        </h2>
+
+        <p>
+            Take the assessment and get your personalized
+            AI-powered placement readiness report.
+        </p>
+
+        <a href="{{ url_for('assessment') }}" class="btn">
+            Start Assessment &rarr;
+        </a>
+
+    </div>
+
+</section>
+
+
+{% endblock %}
